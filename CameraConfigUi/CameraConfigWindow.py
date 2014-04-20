@@ -23,8 +23,8 @@ class CameraConfigWindow:
         if camera is None:
             self.camera = Camera()
         
-        #if not self.camera.isInitialized():
-        #   self._initializedCam()       
+        if not self.camera.isInitialized():
+           self.camera.initialize()       
            
         #Create QActionGroups 
         (self.loadGroup,self.loadSignalMapper) = self._setQActionGroup(self.ui.menuLoad_Config_File,ConfigFileIndex)

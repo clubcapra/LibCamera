@@ -119,8 +119,8 @@ BOOST_PYTHON_MODULE(camera)
         .def("stop",&Camera::stop)
 
         .def("getCam",&Camera::getCam)
-        .def("startVideo", &Camera::startVideo)
-        .def("stopVideo",&Camera::stopVideo)
+        //.def("startVideo", &Camera::startVideo)
+        //.def("stopVideo",&Camera::stopVideo)
 
         .def("loadConfigFile",&Camera::loadConfigFile)
         .def("saveConfigFile",&Camera::saveConfigFile)

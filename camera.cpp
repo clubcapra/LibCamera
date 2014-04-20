@@ -13,24 +13,37 @@
 
 #include "camera.h"
 #include <iostream>
+#include <unistd.h>
 
+mutex mtx_camera;
+atomic_int lastFrameId;
+atomic_int readingFrameId;
 Camera::Camera()
 {
+
     //This is necessary to use numpy array
     _import_array();
 
     cam=NULL;
-    frame = tPvFrame();
-    array = NULL;
+
+    for(int i=0;i<FRAME_BUFFER;i++)
+    {
+        cout << "init narray!"<<endl;
+        narrays[i] = new PyObject();
+        frames[i] = new tPvFrame();
+    }
+    //array = NULL;
     started = false;
     initialized = false;
     videoStarted = false;
+    lastFrameId = -1;
+    readingFrameId = -1;
 }
 
 Camera::~Camera()
 {
     cout << "destructor is called!"<<endl;
-    if(array!=NULL){
+    if(started){
          this->stop();
     }
     if(cam!=NULL){
@@ -83,11 +96,13 @@ void Camera::initialize()
             tPvUint32 lMaxSize = 8228;
             PvCameraOpen(lInfos[0].UniqueId,ePvAccessMaster,&(this->cam));
             // get the last packet size set on the camera
-            PvAttrUint32Get(this->cam,"PacketSize",&lMaxSize);
+            //PvAttrUint32Get(this->cam,"PacketSize",&lMaxSize);
             // adjust the packet size according to the current network capacity
             PvCaptureAdjustPacketSize(this->cam,lMaxSize);
 
-
+            setHeight(734);
+            setWidth(1292);
+            setTolalBytesPerFrame(57600);
             this->setPixelFormat(Bgr24);
             //set frame triggers to be generated internally
             PvAttrEnumSet(this->cam, "FrameStartTriggerMode", "Freerun");
@@ -95,6 +110,7 @@ void Camera::initialize()
            this->setAcquisitionMode(Continuous);
 
             PvCaptureStart(this->cam);
+
         }
     }
     else
@@ -103,6 +119,7 @@ void Camera::initialize()
     }
     initialized = true;
 }
+
 
 void Camera::uninitialize(){
     if(this->cam == NULL){
@@ -116,34 +133,48 @@ void Camera::uninitialize(){
     initialized = false;
 }
 
-PyObject* Camera::getFrame()
+int Camera::getFrame()
 {
-    checkIfCameraIsInitialized();
-    if(array==NULL)
-    {
-        throw CameraNotStartException();
-    }
+    //checkIfCameraIsInitialized();
 
-    PvCaptureWaitForFrameDone(this->cam, &frame, PVINFINITE);
-    PvCaptureQueueFrame(this->cam, &frame, NULL);
-    return PyArray_SimpleNewFromData(CHANNEL,dims,NPY_UINT8,array);
+    readingFrameId.store(lastFrameId.load());
+    if(readingFrameId == -1)
+    {
+        return 0;
+    }
+    //cout<<"reading frame id:"<<readingFrameId.load()<<endl;
+    return readingFrameId.load();
 }
 
 PyObject* Camera::getCam(){
     checkIfCameraIsInitialized();
-    return PyArray_SimpleNewFromData(CHANNEL,dims,NPY_UINT8,array);
+
+    npy_intp dimension[1];
+    dimension[0] = FRAME_BUFFER;
+    PyObject* frames = PyArray_SimpleNewFromData(1,dimension,NPY_OBJECT,narrays);
+
+    return frames;
 }
 
-void Camera::startVideo(){
+void Camera::startVideo(const int id){
     checkIfCameraIsInitialized();
-
-    if(!started){
-        start();
-    }
+    cout<<"start video: "<<id<<endl;
     videoStarted = true;
-    while(videoStarted){
-        PvCaptureWaitForFrameDone(this->cam, &frame, PVINFINITE);
-        PvCaptureQueueFrame(this->cam, &frame, NULL);
+
+    while(videoStarted)
+    {
+
+        if(readingFrameId.load() != id)
+        {
+            PvCaptureQueueFrame(this->cam, frames[id], NULL);
+            PvCaptureWaitForFrameDone(this->cam, frames[id], PVINFINITE);
+            lastFrameId.store(id);
+            //cout<<"last frame id:"<<id<<endl;
+        }else
+        {
+            usleep(10);
+        }
+        //narrays[id] = PyArray_SimpleNewFromData(CHANNEL,dims,NPY_UINT8,frames[id]->ImageBuffer);
     }
 }
 
@@ -167,28 +198,28 @@ void Camera::start()
 
     dims[0] = frameHeight;
     dims[1] = frameWidth;
-    dims[2] = channel;
+    dims[2] = CHANNEL;
 
-    frame.ImageBufferSize = frameSize;
-
-    if(array != NULL){
-        delete array;
+    for(int i=0;i<FRAME_BUFFER;i++)
+    {
+        frames[i]->ImageBufferSize = frameSize;
+        //arrays[i] = new char[frameSize];
+        frames[i]->ImageBuffer= new char[frameSize];
+        narrays[i] = PyArray_SimpleNewFromData(CHANNEL,dims,NPY_UINT8,frames[i]->ImageBuffer);
     }
-
-    array = new char[frameSize];
-
-    frame.ImageBuffer=array;
     started = true;
+
+    for(int i=0;i<FRAME_BUFFER;i++)
+    {
+        videoThread[i] = new thread(&Camera::startVideo,this,i);
+    }
+    //first.join();
 }
 
 void Camera::stop(){
-    if(array == NULL){
-        return;
-    }
+
     checkIfCameraIsInitialized();
     PvCommandRun(this->cam, "AcquisitionStop");
-    delete array;
-    array = NULL;
     started = false;
 }
 
@@ -261,6 +292,11 @@ int Camera::getTotalBytesPerFrame(){
     tPvUint32 frameSize;
     PvAttrUint32Get(this->cam, "TotalBytesPerFrame", &frameSize);
     return frameSize;
+}
+
+void Camera::setTolalBytesPerFrame(int frameSize){
+    checkIfCameraIsInitialized();
+    PvAttrUint32Set(this->cam, "TotalBytesPerFrame", frameSize);
 }
 
 /** End Configurations Commands **/
@@ -655,7 +691,7 @@ void Camera::checkWhitebalValue(int value){
 void Camera::checkIfCameraIsInitialized(){
     if(this->cam == NULL)
     {
-        throw CameraNotInitializeException();
+        initialize();
     }
 }
 

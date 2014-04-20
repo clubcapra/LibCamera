@@ -106,3 +106,39 @@
 	<iostream>
 	<boost/python.hpp>
 
+1397426892 source:/home/novae/workspace/LibCamera/camera.cpp
+	"camera.h"
+	<iostream>
+	<unistd.h>
+
+1397949981 /home/novae/workspace/LibCamera/camera.h
+	"PvApi.h"
+	<opencv2/highgui/highgui.hpp>
+	<opencv2/core/core.hpp>
+	"ImageLib.h"
+	<stdio.h>
+	<queue>
+	<exception>
+	<boost/python.hpp>
+	<boost/python/extract.hpp>
+	<boost/python/numeric.hpp>
+	<boost/python/tuple.hpp>
+	<boost/algorithm/string.hpp>
+	<ndarrayobject.h>
+	<thread>
+	<mutex>
+	<atomic>
+
+1371600414 /home/novae/workspace/LibCamera/PvApi.h
+
+1371600414 /home/novae/workspace/LibCamera/ImageLib.h
+	"PvApi.h"
+
+1371600414 source:/home/novae/workspace/LibCamera/main.cpp
+	"camera.h"
+	<iostream>
+	<boost/python.hpp>
+
+1397419770 source:/home/novae/workspace/LibCamera/mainTest.cpp
+	"camera.h"
+

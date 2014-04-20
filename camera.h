@@ -16,9 +16,11 @@
 #define PY_UFUNC_UNIQUE_SYMBOL
 #define CHANNEL 3
 #define MAX_TIMEOUT 5
+#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 
 #include "PvApi.h"
-#include <opencv2/opencv.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/core/core.hpp>
 #include "ImageLib.h"
 #include <stdio.h>
 #include <queue>
@@ -29,6 +31,9 @@
 #include <boost/python/tuple.hpp>
 #include <boost/algorithm/string.hpp>
 #include <ndarrayobject.h>
+#include <thread>
+#include <mutex>
+#include <atomic>
 
 using namespace std;
 using namespace boost::python;
@@ -178,6 +183,8 @@ class StringToEnumConversionException:public exception{
 };
 /** End Declaration of Exception **/
 /** CAMERA_h **/
+#define FRAME_BUFFER 6
+
 class Camera
 {
 public:
@@ -185,7 +192,7 @@ public:
     ~Camera();
     void initialize();
     void uninitialize();
-    PyObject* getFrame();
+    int getFrame();
     bool isInitialized();
     bool isStarted();
 
@@ -196,8 +203,6 @@ public:
     void saveConfigFile();
 
     PyObject* getCam();
-    void startVideo();
-    void stopVideo();
 
     //configuration methods
     void setPixelFormat(PixelFormat);
@@ -210,6 +215,7 @@ public:
     ConfigFileIndex getConfigFileIndex();
 
     int getTotalBytesPerFrame();
+    void setTolalBytesPerFrame(int);
 
     //ROI methods
     int getHeight();
@@ -264,17 +270,21 @@ public:
     int getWhitebalValueBlue();
     void setWhitebalValueBlue(int);
 
+
     //Stats methods
 
 private:
     tPvHandle cam;
-    tPvFrame frame;
+    //Frames
+    tPvFrame* frames[FRAME_BUFFER];
     npy_intp dims[CHANNEL];
+    PyObject* narrays[FRAME_BUFFER];
     int channel;
-    char* array;
     bool started;
     bool initialized;
     bool videoStarted;
+    thread* videoThread[FRAME_BUFFER];
+
 
     //private methods
     void setChannel(PixelFormat);
@@ -283,6 +293,9 @@ private:
     bool checkFloatValue(float,float);
     void checkWhitebalValue(int);
     void checkIfCameraIsInitialized();
+    void startVideo(const int id);
+    void stopVideo();
+
 
 
     template <class E>
