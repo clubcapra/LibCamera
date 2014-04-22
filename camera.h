@@ -215,7 +215,10 @@ public:
     ConfigFileIndex getConfigFileIndex();
 
     int getTotalBytesPerFrame();
-    void setTolalBytesPerFrame(int);
+    void setTotalBytesPerFrame(int);
+
+    int getStreamBytesPerSecond();
+    void setStreamBytesPerSecond(int);
 
     //ROI methods
     int getHeight();

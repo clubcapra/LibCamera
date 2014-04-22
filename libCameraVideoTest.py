@@ -17,7 +17,7 @@ while True:
 	t1=time.time()	
 	frameId = cam.getFrame()	
 	cv2.imshow("Video",cv2.resize(img[frameId],(400,300)))
-	cv2.cv.WaitKey(10)
+	cv2.cv.WaitKey(1)
 	#time.sleep(10);
 	t2=time.time()
 	fps = 1/(t2-t1)

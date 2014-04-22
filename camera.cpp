@@ -44,7 +44,7 @@ Camera::~Camera()
 {
     cout << "destructor is called!"<<endl;
     if(started){
-         this->stop();
+         this->stopVideo();
     }
     if(cam!=NULL){
        this->uninitialize();
@@ -100,9 +100,9 @@ void Camera::initialize()
             // adjust the packet size according to the current network capacity
             PvCaptureAdjustPacketSize(this->cam,lMaxSize);
 
-            setHeight(734);
-            setWidth(1292);
-            setTolalBytesPerFrame(57600);
+            //setHeight(734);
+                    //setWidth(1292);
+            //setTolalBytesPerFrame(57600);
             this->setPixelFormat(Bgr24);
             //set frame triggers to be generated internally
             PvAttrEnumSet(this->cam, "FrameStartTriggerMode", "Freerun");
@@ -206,7 +206,7 @@ void Camera::start()
         //arrays[i] = new char[frameSize];
         frames[i]->ImageBuffer= new char[frameSize];
         narrays[i] = PyArray_SimpleNewFromData(CHANNEL,dims,NPY_UINT8,frames[i]->ImageBuffer);
-    }
+    }115,000,000
     started = true;
 
     for(int i=0;i<FRAME_BUFFER;i++)
@@ -294,9 +294,21 @@ int Camera::getTotalBytesPerFrame(){
     return frameSize;
 }
 
-void Camera::setTolalBytesPerFrame(int frameSize){
+void Camera::setTotalBytesPerFrame(int frameSize){
     checkIfCameraIsInitialized();
     PvAttrUint32Set(this->cam, "TotalBytesPerFrame", frameSize);
+}
+
+int Camera::getStreamBytesPerSecond(){
+    checkIfCameraIsInitialized();
+    tPvUint32 frameSize;
+    PvAttrUint32Get(this->cam, "StreamBytesPerSecond", &frameSize);
+    return frameSize;
+}
+
+void Camera::setStreamBytesPerSecond(int frameSize){
+    checkIfCameraIsInitialized();
+    PvAttrUint32Set(this->cam, "StreamBytesPerSecond", frameSize);
 }
 
 /** End Configurations Commands **/

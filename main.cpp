@@ -136,6 +136,9 @@ BOOST_PYTHON_MODULE(camera)
         .def("setConfigFileIndex",&Camera::setConfigFileIndex)
         .def("getConfigFileIndex",&Camera::getConfigFileIndex)
         .def("getTotalBytesPerFrame",&Camera::getTotalBytesPerFrame)
+        .def("setTotalBytesPerFrame",&Camera::setTotalBytesPerFrame)
+        .def("getStreamBytesPerSecond",&Camera::getStreamBytesPerSecond)
+        .def("setStreamBytesPerSecond",&Camera::setStreamBytesPerSecond)
 
         /**ROI methods**/
         .def("getHeight",&Camera::getHeight)
