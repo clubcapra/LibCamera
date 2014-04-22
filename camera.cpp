@@ -206,7 +206,7 @@ void Camera::start()
         //arrays[i] = new char[frameSize];
         frames[i]->ImageBuffer= new char[frameSize];
         narrays[i] = PyArray_SimpleNewFromData(CHANNEL,dims,NPY_UINT8,frames[i]->ImageBuffer);
-    }115,000,000
+    }
     started = true;
 
     for(int i=0;i<FRAME_BUFFER;i++)
