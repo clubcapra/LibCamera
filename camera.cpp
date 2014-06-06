@@ -136,8 +136,8 @@ void Camera::uninitialize(){
 int Camera::getFrame()
 {
     //checkIfCameraIsInitialized();
-
-    readingFrameId.store(lastFrameId.load());
+    usleep(33333);
+    readingFrameId.store(lastFrameId.load(memory_order_release),memory_order_acquire);
     if(readingFrameId == -1)
     {
         return 0;
@@ -161,18 +161,19 @@ void Camera::startVideo(const int id){
     cout<<"start video: "<<id<<endl;
     videoStarted = true;
 
+    usleep(10*id);
     while(videoStarted)
     {
 
-        if(readingFrameId.load() != id)
+        if(readingFrameId.load(memory_order_release) != id)
         {
             PvCaptureQueueFrame(this->cam, frames[id], NULL);
             PvCaptureWaitForFrameDone(this->cam, frames[id], PVINFINITE);
-            lastFrameId.store(id);
+            lastFrameId.store(id,memory_order_acquire);
             //cout<<"last frame id:"<<id<<endl;
         }else
         {
-            usleep(10);
+            usleep(33333);
         }
         //narrays[id] = PyArray_SimpleNewFromData(CHANNEL,dims,NPY_UINT8,frames[id]->ImageBuffer);
     }

@@ -30,6 +30,7 @@
 #include <boost/python/numeric.hpp>
 #include <boost/python/tuple.hpp>
 #include <boost/algorithm/string.hpp>
+
 #include <ndarrayobject.h>
 #include <thread>
 #include <mutex>
@@ -183,7 +184,7 @@ class StringToEnumConversionException:public exception{
 };
 /** End Declaration of Exception **/
 /** CAMERA_h **/
-#define FRAME_BUFFER 6
+#define FRAME_BUFFER 3
 
 class Camera
 {
