@@ -135,7 +135,7 @@ void Camera::uninitialize(){
 
 int Camera::getFrame()
 {
-    //checkIfCameraIsInitialized();
+    checkIfCameraIsInitialized();
     usleep(33333);
     readingFrameId.store(lastFrameId.load(memory_order_release),memory_order_acquire);
     if(readingFrameId == -1)
